@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create your GrapeGuard AI account to start detecting grapevine diseases with AI.">
+    <title>Register | GrapeGuard AI</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+
+    <!-- ===== Navigation Bar ===== -->
+    <nav class="navbar navbar-expand-lg" id="mainNavbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <span class="brand-icon">🍇</span>
+                GrapeGuard AI
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-1">
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+                    <li class="nav-item"><a class="nav-link active nav-btn" href="/register">Register</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== Registration Form ===== -->
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-icon">🌿</div>
+                <h2>Create Account</h2>
+                <p class="auth-subtitle">Join GrapeGuard AI and protect your grapevines</p>
+            </div>
+
+            <!-- Alert Messages -->
+            <div class="alert-custom alert-error" id="errorAlert"></div>
+            <div class="alert-custom alert-success" id="successAlert"></div>
+
+            <form id="registerForm" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label for="registerName">Full Name</label>
+                    <input type="text" class="form-control-custom" id="registerName" placeholder="Enter your full name"
+                        required autocomplete="name">
+                </div>
+
+                <div class="form-group">
+                    <label for="registerEmail">Email Address</label>
+                    <input type="email" class="form-control-custom" id="registerEmail" placeholder="Enter your email"
+                        required autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" class="form-control-custom" id="registerPassword"
+                        placeholder="Create a password (min 6 characters)" required minlength="6"
+                        autocomplete="new-password">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" class="form-control-custom" id="confirmPassword"
+                        placeholder="Confirm your password" required autocomplete="new-password">
+                </div>
+
+                <button type="submit" class="btn-auth" id="registerBtn">
+                    Create Account
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                Already have an account? <a href="/login">Sign in here</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Footer ===== -->
+    <footer class="footer">
+        <div class="footer-bottom">
+            <span>© 2026 GrapeGuard AI — Grapevine Disease Detection System</span>
+            <span>Developed with ❤️ for Sustainable Agriculture</span>
+        </div>
+    </footer>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Loading Spinner -->
+    <div class="spinner-overlay" id="loadingSpinner">
+        <div class="spinner"></div>
+        <span class="spinner-text">Creating your account...</span>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        /**
+         * Handle Registration Form Submission
+         * 
+         * Process:
+         *   1. Validate all input fields
+         *   2. Confirm passwords match
+         *   3. Send POST request to /register endpoint
+         *   4. On success: store JWT token and redirect
+         *   5. On failure: display error message
+         */
+        async function handleRegister(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('registerName').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+            const errorAlert = document.getElementById('errorAlert');
+            const successAlert = document.getElementById('successAlert');
+            const registerBtn = document.getElementById('registerBtn');
+            const spinner = document.getElementById('loadingSpinner');
+
+            // Reset alerts
+            errorAlert.style.display = 'none';
+            successAlert.style.display = 'none';
+
+            // Validate fields
+            if (!name || !email || !password || !confirmPass) {
+                showAlert(errorAlert, 'Please fill in all fields.');
+                return;
+            }
+
+            if (password.length < 6) {
+                showAlert(errorAlert, 'Password must be at least 6 characters long.');
+                return;
+            }
+
+            if (password !== confirmPass) {
+                showAlert(errorAlert, 'Passwords do not match. Please try again.');
+                return;
+            }
+
+            // Show loading state
+            registerBtn.disabled = true;
+            registerBtn.textContent = 'Creating Account...';
+            spinner.classList.add('active');
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Store JWT token and user info for immediate login
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+
+                    showAlert(successAlert, data.message);
+                    showToast('Account created! Redirecting...', 'success');
+
+                    // Redirect to prediction page
+                    setTimeout(() => {
+                        window.location.href = '/predict-page';
+                    }, 1000);
+                } else {
+                    showAlert(errorAlert, data.message);
+                    showToast(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert(errorAlert, 'Connection error. Please try again.');
+                showToast('Connection failed', 'error');
+            } finally {
+                registerBtn.disabled = false;
+                registerBtn.textContent = 'Create Account';
+                spinner.classList.remove('active');
+            }
+        }
+
+        function showAlert(element, message) {
+            element.textContent = message;
+            element.style.display = 'block';
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+            toast.innerHTML = `<span>${icons[type]}</span><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            document.getElementById('mainNavbar').classList.toggle('scrolled', window.scrollY > 20);
+        });
+        // Redirect if already logged in
+        if (localStorage.getItem('token')) {
+            window.location.href = '/predict-page';
+        }
+    </script>
+</body>
+
+</html>

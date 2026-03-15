@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="View your grapevine disease prediction history, statistics, and uploaded images.">
+    <title>Dashboard | GrapeGuard AI</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+
+    <!-- ===== Navigation Bar ===== -->
+    <nav class="navbar navbar-expand-lg" id="mainNavbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <span class="brand-icon">🍇</span>
+                GrapeGuard AI
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-1">
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/predict-page">🔬 Predict</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/dashboard">📊 Dashboard</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-logout" href="#" onclick="logout()">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== Dashboard ===== -->
+    <div class="dashboard-container">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div>
+                <h1>📊 Prediction Dashboard</h1>
+                <p style="color: var(--text-muted); margin-top: 4px;">
+                    Welcome back, <strong id="userName">User</strong>
+                </p>
+            </div>
+            <a href="/predict-page" class="btn-primary-custom">
+                🔬 New Prediction
+            </a>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--primary-100); color: var(--primary-600);">📊</div>
+                <div class="stat-value" id="totalPredictions">0</div>
+                <div class="stat-label">Total Predictions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #dbeafe; color: var(--accent-blue);">🎯</div>
+                <div class="stat-value" id="avgConfidence">0%</div>
+                <div class="stat-label">Average Confidence</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--primary-100); color: var(--primary-600);">🌿</div>
+                <div class="stat-value" id="healthyCount">0</div>
+                <div class="stat-label">Healthy Detected</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #fee2e2; color: var(--accent-red);">⚠️</div>
+                <div class="stat-value" id="diseaseCount">0</div>
+                <div class="stat-label">Diseases Detected</div>
+            </div>
+        </div>
+
+        <!-- Prediction History Table -->
+        <div class="history-section">
+            <h3>📋 Prediction History</h3>
+
+            <div id="historyContent">
+                <!-- Loading State -->
+                <div class="empty-state" id="loadingState">
+                    <span class="empty-icon">⏳</span>
+                    <p>Loading prediction history...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Footer ===== -->
+    <footer class="footer">
+        <div class="footer-bottom">
+            <span>© 2026 GrapeGuard AI — Grapevine Disease Detection System</span>
+            <span>Developed with ❤️ for Sustainable Agriculture</span>
+        </div>
+    </footer>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Loading Spinner -->
+    <div class="spinner-overlay" id="loadingSpinner">
+        <div class="spinner"></div>
+        <span class="spinner-text">Loading dashboard...</span>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        window.addEventListener('scroll', () => {
+            document.getElementById('mainNavbar').classList.toggle('scrolled', window.scrollY > 20);
+        });
+    </script>
+    <script>
+        /**
+         * Check authentication on page load.
+         * Redirect to login if no valid JWT token exists.
+         */
+        (function checkAuth() {
+            if (!localStorage.getItem('token')) {
+                window.location.href = '/login';
+                return;
+            }
+            // Display stored user name
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            document.getElementById('userName').textContent = user.name || 'User';
+        })();
+
+        /**
+         * Fetch and display prediction history on page load.
+         */
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+
+        async function loadDashboard() {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            try {
+                const response = await fetch('/api/history', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    updateStats(data.predictions);
+                    renderHistory(data.predictions);
+                } else {
+                    if (response.status === 401) {
+                        localStorage.removeItem('token');
+                        window.location.href = '/login';
+                        return;
+                    }
+                    showToast(data.message || 'Failed to load dashboard.', 'error');
+                }
+            } catch (error) {
+                console.error('Dashboard error:', error);
+                showToast('Failed to load dashboard. Please try again.', 'error');
+                document.getElementById('historyContent').innerHTML = `
+                    <div class="empty-state">
+                        <span class="empty-icon">⚠️</span>
+                        <p>Failed to load prediction history.</p>
+                        <button class="btn-secondary-custom" onclick="loadDashboard()" style="margin-top: 12px;">
+                            🔄 Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        /**
+         * Update the stats cards with computed values from predictions.
+         *
+         * Computes:
+         *   - Total number of predictions
+         *   - Average confidence across all predictions
+         *   - Number of healthy vs diseased detections
+         */
+        function updateStats(predictions) {
+            const total = predictions.length;
+            document.getElementById('totalPredictions').textContent = total;
+
+            if (total === 0) {
+                document.getElementById('avgConfidence').textContent = '0%';
+                document.getElementById('healthyCount').textContent = '0';
+                document.getElementById('diseaseCount').textContent = '0';
+                return;
+            }
+
+            // Calculate average confidence
+            const avgConf = predictions.reduce((sum, p) => sum + p.confidence, 0) / total;
+            document.getElementById('avgConfidence').textContent = `${avgConf.toFixed(1)}%`;
+
+            // Count healthy vs diseased
+            const healthy = predictions.filter(p => p.prediction === 'Healthy').length;
+            document.getElementById('healthyCount').textContent = healthy;
+            document.getElementById('diseaseCount').textContent = total - healthy;
+        }
+
+        /**
+         * Render the prediction history table.
+         * Shows a thumbnail, disease badge, confidence, and date for each prediction.
+         */
+        function renderHistory(predictions) {
+            const container = document.getElementById('historyContent');
+
+            if (predictions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="empty-icon">🔬</span>
+                        <h4>No predictions yet</h4>
+                        <p>Upload your first grape leaf image to get started!</p>
+                        <a href="/predict-page" class="btn-primary-custom" style="margin-top: 16px;">
+                            🔬 Make Your First Prediction
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Disease</th>
+                            <th>Confidence</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            predictions.forEach(pred => {
+                // Determine badge class based on disease type
+                const badgeClass = getBadgeClass(pred.prediction);
+
+                // Confidence color based on value
+                const confColor = pred.confidence >= 80 ? 'var(--primary-600)' :
+                    pred.confidence >= 50 ? 'var(--accent-amber)' : 'var(--accent-red)';
+
+                html += `
+                    <tr>
+                        <td>
+                            <img src="/uploads/${pred.image_path}" class="thumb-img"
+                                 alt="${pred.prediction}" loading="lazy"
+                                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2250%22><rect fill=%22%23f0f0f0%22 width=%2250%22 height=%2250%22/><text fill=%22%23999%22 x=%2225%22 y=%2230%22 text-anchor=%22middle%22 font-size=%2212%22>🍃</text></svg>'">
+                        </td>
+                        <td>
+                            <span class="badge-disease ${badgeClass}">${pred.prediction}</span>
+                        </td>
+                        <td>
+                            <span class="confidence-badge" style="color: ${confColor}">
+                                ${pred.confidence.toFixed(1)}%
+                            </span>
+                        </td>
+                        <td style="color: var(--text-muted); font-size: 0.88rem;">
+                            ${formatDate(pred.date)}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        /**
+         * Get CSS class for disease badge based on prediction type.
+         */
+        function getBadgeClass(disease) {
+            const classes = {
+                'Black Rot': 'black-rot',
+                'ESCA': 'esca',
+                'Healthy': 'healthy',
+                'Leaf Blight': 'leaf-blight'
+            };
+            return classes[disease] || '';
+        }
+
+        /**
+         * Format a date string for display.
+         */
+        function formatDate(dateStr) {
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return dateStr;
+            }
+        }
+
+        /**
+         * Logout and redirect.
+         */
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            showToast('Logged out successfully!', 'info');
+            setTimeout(() => { window.location.href = '/'; }, 500);
+        }
+
+        /**
+         * Toast notification system.
+         */
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+            toast.innerHTML = `<span>${icons[type]}</span><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+    </script>
+</body>
+
+</html>

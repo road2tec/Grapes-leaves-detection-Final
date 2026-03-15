@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Login to your GrapeGuard AI account to detect grapevine diseases.">
+    <title>Login | GrapeGuard AI</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+
+    <!-- ===== Navigation Bar ===== -->
+    <nav class="navbar navbar-expand-lg" id="mainNavbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <span class="brand-icon">🍇</span>
+                GrapeGuard AI
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-1">
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/login">Login</a></li>
+                    <li class="nav-item"><a class="nav-link nav-btn" href="/register">Register</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== Login Form ===== -->
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-icon">🔐</div>
+                <h2>Welcome Back</h2>
+                <p class="auth-subtitle">Sign in to continue to GrapeGuard AI</p>
+            </div>
+
+            <!-- Alert Messages -->
+            <div class="alert-custom alert-error" id="errorAlert"></div>
+            <div class="alert-custom alert-success" id="successAlert"></div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="loginEmail">Email Address</label>
+                    <input type="email" class="form-control-custom" id="loginEmail" placeholder="Enter your email"
+                        required autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" class="form-control-custom" id="loginPassword"
+                        placeholder="Enter your password" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn-auth" id="loginBtn">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                Don't have an account? <a href="/register">Create one here</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Footer ===== -->
+    <footer class="footer">
+        <div class="footer-bottom">
+            <span>© 2026 GrapeGuard AI — Grapevine Disease Detection System</span>
+            <span>Developed with ❤️ for Sustainable Agriculture</span>
+        </div>
+    </footer>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Loading Spinner -->
+    <div class="spinner-overlay" id="loadingSpinner">
+        <div class="spinner"></div>
+        <span class="spinner-text">Signing in...</span>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        /**
+         * Handle Login Form Submission
+         * 
+         * Process:
+         *   1. Collect email and password from form
+         *   2. Send POST request to /login API endpoint
+         *   3. On success: store JWT token and redirect to predict page
+         *   4. On failure: display error message
+         */
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const errorAlert = document.getElementById('errorAlert');
+            const successAlert = document.getElementById('successAlert');
+            const loginBtn = document.getElementById('loginBtn');
+            const spinner = document.getElementById('loadingSpinner');
+
+            // Reset alerts
+            errorAlert.style.display = 'none';
+            successAlert.style.display = 'none';
+
+            // Basic validation
+            if (!email || !password) {
+                showAlert(errorAlert, 'Please fill in all fields.');
+                return;
+            }
+
+            // Show loading state
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing in...';
+            spinner.classList.add('active');
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Store authentication token and user info
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+
+                    showAlert(successAlert, data.message);
+                    showToast('Login successful! Redirecting...', 'success');
+
+                    // Redirect to prediction page after brief delay
+                    setTimeout(() => {
+                        window.location.href = '/predict-page';
+                    }, 1000);
+                } else {
+                    showAlert(errorAlert, data.message);
+                    showToast(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert(errorAlert, 'Connection error. Please check your internet and try again.');
+                showToast('Connection failed', 'error');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
+                spinner.classList.remove('active');
+            }
+        }
+
+        /**
+         * Display an alert message within the form.
+         */
+        function showAlert(element, message) {
+            element.textContent = message;
+            element.style.display = 'block';
+        }
+
+        /**
+         * Toast notification system.
+         */
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+            toast.innerHTML = `<span>${icons[type]}</span><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            document.getElementById('mainNavbar').classList.toggle('scrolled', window.scrollY > 20);
+        });
+        // Redirect if already logged in
+        if (localStorage.getItem('token')) {
+            window.location.href = '/predict-page';
+        }
+    </script>
+</body>
+
+</html>

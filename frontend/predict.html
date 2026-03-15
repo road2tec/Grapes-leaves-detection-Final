@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Upload grape leaf images for AI-powered disease detection. Identify Black Rot, ESCA, Leaf Blight, and healthy leaves.">
+    <title>Predict Disease | GrapeGuard AI</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+
+    <!-- ===== Navigation Bar ===== -->
+    <nav class="navbar navbar-expand-lg" id="mainNavbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <span class="brand-icon">🍇</span>
+                GrapeGuard AI
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-1">
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/predict-page">🔬 Predict</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/dashboard">📊 Dashboard</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-logout" href="#" onclick="logout()">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== Prediction Page ===== -->
+    <div class="predict-container">
+        <div class="predict-header">
+            <h1>🔬 Disease Detection</h1>
+            <p>Upload a grape leaf image and our AI model will identify the disease</p>
+        </div>
+
+        <!-- Upload Zone -->
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('imageInput').click()">
+            <span class="upload-icon">📤</span>
+            <h3>Upload Grape Leaf Image</h3>
+            <p>Drag & drop an image here, or click to browse</p>
+            <p style="font-size: 0.82rem; margin-top: 8px; color: var(--text-light);">
+                Supports: PNG, JPG, JPEG, GIF, BMP, WEBP (max 16MB)
+            </p>
+            <p class="file-info" id="fileInfo" style="display:none;"></p>
+        </div>
+
+        <!-- Hidden file input -->
+        <input type="file" id="imageInput" accept="image/*" onchange="handleFileSelect(event)">
+
+        <!-- Image Preview -->
+        <div class="image-preview-container" id="previewContainer">
+            <img id="imagePreview" class="image-preview" alt="Selected leaf image preview">
+            <div style="text-align: center; margin-top: var(--spacing-lg);">
+                <button class="btn-primary-custom btn-predict" id="predictBtn" onclick="runPrediction()">
+                    🧠 Analyze Disease
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Card -->
+        <div class="result-card" id="resultCard">
+            <div class="result-header">
+                <div class="result-status-icon success">✅</div>
+                <div>
+                    <h3 style="margin:0;">Analysis Complete</h3>
+                    <p style="margin:0; font-size: 0.88rem; color: var(--text-muted);">
+                        Disease classification result
+                    </p>
+                </div>
+            </div>
+
+            <div class="result-main">
+                <div class="result-image-col">
+                    <img id="resultImage" class="result-image" alt="Analyzed leaf image">
+                </div>
+                <div class="result-details-col">
+                    <div style="margin-bottom: var(--spacing-xs);">
+                        <span
+                            style="font-size:0.85rem; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">Detected
+                            Disease</span>
+                    </div>
+                    <div class="disease-name" id="diseaseName">—</div>
+
+                    <div style="margin-top: var(--spacing-md); margin-bottom: var(--spacing-xs);">
+                        <span
+                            style="font-size:0.85rem; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">Confidence</span>
+                    </div>
+                    <div class="confidence-value" id="confidenceValue">—</div>
+
+                    <!-- Class Probability Bars -->
+                    <div class="prob-bars" id="probBars"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Footer ===== -->
+    <footer class="footer">
+        <div class="footer-bottom">
+            <span>© 2026 GrapeGuard AI — Grapevine Disease Detection System</span>
+            <span>Developed with ❤️ for Sustainable Agriculture</span>
+        </div>
+    </footer>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Loading Spinner -->
+    <div class="spinner-overlay" id="loadingSpinner">
+        <div class="spinner"></div>
+        <span class="spinner-text">Analyzing leaf image...</span>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        window.addEventListener('scroll', () => {
+            document.getElementById('mainNavbar').classList.toggle('scrolled', window.scrollY > 20);
+        });
+    </script>
+    <script>
+        // Selected file reference
+        let selectedFile = null;
+
+        /**
+         * Check authentication on page load.
+         * Redirects to login if no JWT token is found.
+         */
+        (function checkAuth() {
+            if (!localStorage.getItem('token')) {
+                window.location.href = '/login';
+            }
+        })();
+
+        /**
+         * Handle file selection from the file input.
+         * Shows a preview of the selected image.
+         */
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/bmp', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                showToast('Please select a valid image file (PNG, JPG, GIF, BMP, WEBP).', 'error');
+                return;
+            }
+
+            // Validate file size (16MB max)
+            if (file.size > 16 * 1024 * 1024) {
+                showToast('File is too large. Maximum size is 16MB.', 'error');
+                return;
+            }
+
+            selectedFile = file;
+
+            // Show file name in upload zone
+            const fileInfo = document.getElementById('fileInfo');
+            fileInfo.textContent = `📎 ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            fileInfo.style.display = 'block';
+
+            // Show image preview
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('previewContainer').style.display = 'block';
+                document.getElementById('resultCard').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+
+            showToast('Image selected! Click "Analyze Disease" to proceed.', 'info');
+        }
+
+        /**
+         * Drag and Drop Support
+         * Allows users to drag images directly onto the upload zone.
+         */
+        const uploadZone = document.getElementById('uploadZone');
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('drag-over');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('drag-over');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('drag-over');
+
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                // Create a synthetic event to reuse handleFileSelect
+                const input = document.getElementById('imageInput');
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                input.files = dataTransfer.files;
+                handleFileSelect({ target: input });
+            }
+        });
+
+        /**
+         * Run Disease Prediction
+         * 
+         * Pipeline:
+         *   1. Create FormData with the selected image and JWT token
+         *   2. Send POST request to /predict endpoint
+         *   3. Display prediction results with probability bars
+         */
+        async function runPrediction() {
+            if (!selectedFile) {
+                showToast('Please select an image first.', 'error');
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showToast('Please login first.', 'error');
+                window.location.href = '/login';
+                return;
+            }
+
+            const spinner = document.getElementById('loadingSpinner');
+            const predictBtn = document.getElementById('predictBtn');
+
+            // Show loading state
+            spinner.classList.add('active');
+            predictBtn.disabled = true;
+            predictBtn.innerHTML = '⏳ Analyzing...';
+
+            try {
+                // Build form data with image and authentication token
+                const formData = new FormData();
+                formData.append('image', selectedFile);
+                formData.append('token', token);
+
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayResults(data);
+                    showToast('Analysis complete!', 'success');
+                } else {
+                    showToast(data.message || 'Prediction failed.', 'error');
+
+                    // Handle authentication errors
+                    if (response.status === 401) {
+                        localStorage.removeItem('token');
+                        setTimeout(() => { window.location.href = '/login'; }, 1500);
+                    }
+                }
+            } catch (error) {
+                showToast('Connection error. Please try again.', 'error');
+                console.error('Prediction error:', error);
+            } finally {
+                spinner.classList.remove('active');
+                predictBtn.disabled = false;
+                predictBtn.innerHTML = '🧠 Analyze Disease';
+            }
+        }
+
+        /**
+         * Display prediction results in the result card.
+         * Creates animated probability bars for each disease class.
+         */
+        function displayResults(data) {
+            const resultCard = document.getElementById('resultCard');
+
+            // Set result image
+            document.getElementById('resultImage').src = data.image_url;
+
+            // Set disease name and confidence
+            document.getElementById('diseaseName').textContent = data.prediction;
+            document.getElementById('confidenceValue').textContent = `${data.confidence}%`;
+
+            // Generate probability bars
+            const probBars = document.getElementById('probBars');
+            probBars.innerHTML = '';
+
+            // Sort predictions by confidence (highest first)
+            const sorted = Object.entries(data.all_predictions)
+                .sort((a, b) => b[1] - a[1]);
+
+            sorted.forEach(([disease, conf], index) => {
+                const isHighest = index === 0;
+                const item = document.createElement('div');
+                item.className = 'prob-item';
+                item.innerHTML = `
+                    <div class="prob-label">
+                        <span style="color: ${isHighest ? 'var(--primary-700)' : 'var(--text-secondary)'}; font-weight: ${isHighest ? '700' : '500'}">
+                            ${disease}
+                        </span>
+                        <span style="color: ${isHighest ? 'var(--primary-600)' : 'var(--text-muted)'}; font-weight: ${isHighest ? '700' : '500'}">
+                            ${conf}%
+                        </span>
+                    </div>
+                    <div class="prob-bar-bg">
+                        <div class="prob-bar-fill ${isHighest ? 'highlight' : ''}" style="width: 0%"></div>
+                    </div>
+                `;
+                probBars.appendChild(item);
+
+                // Animate bar width after a short delay
+                setTimeout(() => {
+                    item.querySelector('.prob-bar-fill').style.width = `${conf}%`;
+                }, 100 + index * 150);
+            });
+
+            // Show result card with animation
+            resultCard.style.display = 'block';
+            resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        /**
+         * Logout and redirect to home page.
+         */
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            showToast('Logged out successfully!', 'info');
+            setTimeout(() => { window.location.href = '/'; }, 500);
+        }
+
+        /**
+         * Toast notification system.
+         */
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+            toast.innerHTML = `<span>${icons[type]}</span><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+    </script>
+</body>
+
+</html>

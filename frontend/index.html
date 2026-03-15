@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="GrapeGuard AI — AI-powered grapevine disease detection. Detect Black Rot, ESCA, Leaf Blight instantly from leaf images.">
+    <title>GrapeGuard AI | Grapevine Disease Detection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+
+    <!-- ===== Navigation Bar ===== -->
+    <nav class="navbar navbar-expand-lg" id="mainNavbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <span class="brand-icon">🍇</span>
+                GrapeGuard AI
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-1">
+                    <!-- Home is ALWAYS visible -->
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Home</a>
+                    </li>
+                    <!-- Logged-out only -->
+                    <li class="nav-item auth-logged-out">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
+                    <li class="nav-item auth-logged-out">
+                        <a class="nav-link nav-btn" href="/register">Get Started</a>
+                    </li>
+                    <!-- Logged-in only -->
+                    <li class="nav-item auth-logged-in" style="display:none">
+                        <a class="nav-link" href="/predict-page">🔬 Predict</a>
+                    </li>
+                    <li class="nav-item auth-logged-in" style="display:none">
+                        <a class="nav-link" href="/dashboard">📊 Dashboard</a>
+                    </li>
+                    <li class="nav-item auth-logged-in" style="display:none">
+                        <a class="nav-link nav-logout" href="#" onclick="logout()">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== Hero Section ===== -->
+    <section class="hero-section" id="heroSection">
+        <div class="hero-badge">
+            <span class="badge-dot"></span>
+            AI-Powered Disease Detection
+        </div>
+        <h1>Protect Your Grapevines<br>with Intelligent Detection</h1>
+        <p class="hero-description">
+            Upload a grape leaf image and our deep learning model instantly identifies
+            diseases like Black Rot, ESCA, and Leaf Blight — helping you act before it's too late.
+        </p>
+        <div class="hero-actions">
+            <a href="/register" class="btn-primary-custom auth-logged-out">
+                🚀 Get Started Free
+            </a>
+            <a href="/predict-page" class="btn-primary-custom auth-logged-in" style="display:none">
+                🔬 Analyze a Leaf Now
+            </a>
+            <a href="#features" class="btn-secondary-custom">
+                Learn More ↓
+            </a>
+        </div>
+
+        <!-- Stats strip -->
+        <div class="hero-stats">
+            <div class="stat-pill">
+                <span class="num">94%</span>
+                <span class="label">Accuracy</span>
+            </div>
+            <div class="stat-pill">
+                <span class="num">4</span>
+                <span class="label">Diseases</span>
+            </div>
+            <div class="stat-pill">
+                <span class="num">&lt;2s</span>
+                <span class="label">Analysis</span>
+            </div>
+            <div class="stat-pill">
+                <span class="num">9K+</span>
+                <span class="label">Images Trained</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== Features Section ===== -->
+    <section class="features-section" id="features">
+        <div class="section-header">
+            <span class="section-eyebrow">Why GrapeGuard AI?</span>
+            <h2>Built for Precision Agriculture</h2>
+            <p>Advanced technology meets the vineyard for healthier, more productive crops</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon green">🧠</div>
+                <h4>Deep Learning Model</h4>
+                <p>Our CNN trained on 9,000+ grape leaf images delivers highly accurate disease classification with up
+                    to 94% test accuracy.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon blue">⚡</div>
+                <h4>Instant Results</h4>
+                <p>Upload an image and get disease detection results in under 2 seconds, complete with confidence scores
+                    for each class.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon amber">📊</div>
+                <h4>Prediction Dashboard</h4>
+                <p>Track all your past predictions with detailed statistics, uploaded images, and confidence analysis
+                    over time.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon purple">🔒</div>
+                <h4>Private & Secure</h4>
+                <p>Your data is protected with JWT authentication and bcrypt-encrypted passwords stored in a private
+                    MongoDB instance.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== Disease Info Section ===== -->
+    <section class="disease-section">
+        <div class="section-header">
+            <span class="section-eyebrow">Classification Categories</span>
+            <h2>Diseases We Detect</h2>
+            <p>Our model classifies grape leaves into four categories with high precision</p>
+        </div>
+        <div class="disease-grid">
+            <div class="disease-card black-rot">
+                <span class="disease-emoji">🟤</span>
+                <h4>Black Rot</h4>
+                <p>Caused by <em>Guignardia bidwellii</em>, creating circular lesions with dark borders on leaves and
+                    causing fruit rot.</p>
+            </div>
+            <div class="disease-card esca">
+                <span class="disease-emoji">🍂</span>
+                <h4>ESCA (Black Measles)</h4>
+                <p>A complex fungal disease causing distinctive tiger-stripe patterns on leaves and internal wood decay.
+                </p>
+            </div>
+            <div class="disease-card blight">
+                <span class="disease-emoji">🍃</span>
+                <h4>Leaf Blight</h4>
+                <p>Characterized by irregular brown patches that expand rapidly across the leaf, causing severe
+                    defoliation.</p>
+            </div>
+            <div class="disease-card healthy">
+                <span class="disease-emoji">🌿</span>
+                <h4>Healthy</h4>
+                <p>A vibrant, disease-free grape leaf — the ideal condition for optimal grape production and vine
+                    health.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== Footer ===== -->
+    <footer class="footer" id="siteFooter">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h3>🍇 GrapeGuard AI</h3>
+                <p>An intelligent grapevine disease detection system powered by deep learning to help farmers protect
+                    their crops and maximize yields.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/login">Login</a></li>
+                    <li><a href="/register">Register</a></li>
+                    <li><a href="/predict-page">Predict Disease</a></li>
+                    <li><a href="/dashboard">Dashboard</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4>Contact</h4>
+                <ul>
+                    <li><a href="#">📧 support@grapeguard.ai</a></li>
+                    <li><a href="#">📍 Smart Agriculture Lab</a></li>
+                    <li><a href="#">🌐 grapeguard.ai</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>© 2026 GrapeGuard AI — Grapevine Disease Detection System</span>
+            <span>Developed with ❤️ for Sustainable Agriculture</span>
+        </div>
+    </footer>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            document.getElementById('mainNavbar').classList.toggle('scrolled', window.scrollY > 20);
+        });
+
+        function updateAuthUI() {
+            const token = localStorage.getItem('token');
+            document.querySelectorAll('.auth-logged-out').forEach(el => el.style.display = token ? 'none' : '');
+            document.querySelectorAll('.auth-logged-in').forEach(el => el.style.display = token ? '' : 'none');
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            showToast('Logged out successfully!', 'info');
+            setTimeout(() => window.location.href = '/', 500);
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+            toast.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        document.addEventListener('DOMContentLoaded', updateAuthUI);
+    </script>
+</body>
+
+</html>
