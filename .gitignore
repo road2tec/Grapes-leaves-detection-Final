@@ -6,13 +6,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Models and large files
-*.h5
-*.keras
-
 # Uploads directory
 uploads/*
 !uploads/.gitkeep
 
 # Other OS files
 .DS_Store
+
+# Generated documents
+PROJECT_OVERVIEW.md
