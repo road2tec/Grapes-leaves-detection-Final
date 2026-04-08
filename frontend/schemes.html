@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schemes & Carbon Credits | GrapevineAI</title>
+    <meta name="description" content="Government schemes, subsidies, and carbon credit earnings for farmers.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary:#0a0f1e;--bg-secondary:#111827;--bg-card:#1a2235;
+            --accent-green:#22c55e;--accent-purple:#8b5cf6;--accent-blue:#3b82f6;--accent-yellow:#fbbf24;
+            --text-primary:#f1f5f9;--text-secondary:#94a3b8;--text-muted:#64748b;
+            --border:#2d3748;--gradient-main:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Inter',sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;}
+        .navbar{background:var(--bg-secondary);border-bottom:1px solid var(--border);padding:0.75rem 2rem;display:flex;align-items:center;gap:1rem;position:sticky;top:0;z-index:100;}
+        .nav-back{color:var(--text-secondary);text-decoration:none;display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;transition:color 0.2s;}
+        .nav-back:hover{color:var(--accent-green);}
+        .nav-title{font-size:1.1rem;font-weight:700;background:var(--gradient-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+
+        .hero{background:linear-gradient(135deg,rgba(34,197,94,0.1),rgba(139,92,246,0.1));border-bottom:1px solid var(--border);padding:2.5rem 2rem;}
+        .hero-inner{max-width:1200px;margin:0 auto;}
+        .hero h1{font-size:2.2rem;font-weight:800;margin-bottom:0.5rem;}
+        .hero p{color:var(--text-secondary);font-size:0.95rem;margin-bottom:1.5rem;}
+
+        /* Tab Nav */
+        .tab-nav{display:flex;gap:0.5rem;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:0.3rem;width:fit-content;}
+        .tab-btn{padding:0.5rem 1.5rem;border-radius:9px;border:none;background:none;color:var(--text-secondary);font-size:0.88rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif;}
+        .tab-btn.active{background:var(--gradient-main);color:white;}
+
+        .page-content{padding:2rem;max-width:1200px;margin:0 auto;}
+
+        /* Category Filters */
+        .category-filters{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;}
+        .cat-chip{padding:0.4rem 1rem;border-radius:20px;border:1px solid var(--border);color:var(--text-secondary);font-size:0.8rem;font-weight:600;cursor:pointer;transition:all 0.2s;background:none;}
+        .cat-chip.active{background:rgba(139,92,246,0.2);border-color:var(--accent-purple);color:var(--accent-purple);}
+        .cat-chip:hover:not(.active){border-color:var(--text-muted);color:var(--text-primary);}
+
+        /* Scheme Cards Grid */
+        .schemes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:1.25rem;}
+        .scheme-card{
+            background:var(--bg-card);border:1px solid var(--border);border-radius:16px;
+            overflow:hidden;transition:transform 0.2s,border-color 0.2s;
+            cursor:pointer;
+        }
+        .scheme-card:hover{transform:translateY(-3px);border-color:var(--accent-purple);}
+        .scheme-card-header{padding:1.25rem 1.4rem;background:linear-gradient(135deg,rgba(139,92,246,0.1),rgba(102,126,234,0.05));}
+        .scheme-category-badge{display:inline-block;padding:0.2rem 0.7rem;border-radius:20px;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:0.7rem;}
+        .scheme-name{font-size:1rem;font-weight:700;line-height:1.4;margin-bottom:0.4rem;}
+        .scheme-ministry{font-size:0.75rem;color:var(--text-muted);display:flex;align-items:center;gap:0.3rem;}
+        .scheme-card-body{padding:1.25rem 1.4rem;}
+        .scheme-desc{font-size:0.83rem;color:var(--text-secondary);line-height:1.6;margin-bottom:1rem;}
+        .scheme-benefit{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem;}
+        .benefit-label{font-size:0.7rem;font-weight:700;color:var(--accent-green);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:0.25rem;}
+        .benefit-value{font-size:0.9rem;font-weight:700;color:var(--text-primary);}
+        .scheme-tags{display:flex;gap:0.4rem;flex-wrap:wrap;}
+        .scheme-tag{padding:0.25rem 0.6rem;background:rgba(255,255,255,0.05);border-radius:20px;font-size:0.7rem;color:var(--text-muted);}
+        .scheme-footer{padding:0.8rem 1.4rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+        .apply-btn{padding:0.4rem 1rem;background:var(--gradient-main);border:none;border-radius:8px;color:white;font-size:0.78rem;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block;transition:opacity 0.2s;}
+        .apply-btn:hover{opacity:0.85;}
+        .active-badge{display:flex;align-items:center;gap:0.3rem;font-size:0.75rem;color:var(--accent-green);}
+        .active-dot{width:6px;height:6px;background:var(--accent-green);border-radius:50%;}
+
+        /* Carbon Credit Cards */
+        .carbon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.25rem;}
+        .carbon-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:transform 0.2s;padding:1.4rem;}
+        .carbon-card:hover{transform:translateY(-3px);}
+        .carbon-icon{font-size:2rem;margin-bottom:0.75rem;}
+        .carbon-title{font-size:1rem;font-weight:700;margin-bottom:0.6rem;}
+        .carbon-desc{font-size:0.83rem;color:var(--text-secondary);line-height:1.6;margin-bottom:1rem;}
+        .earning-badge{background:linear-gradient(135deg,rgba(34,197,94,0.2),rgba(16,163,65,0.1));border:1px solid rgba(34,197,94,0.3);border-radius:10px;padding:0.6rem 0.9rem;margin-bottom:1rem;}
+        .earning-label{font-size:0.7rem;color:var(--accent-green);font-weight:700;text-transform:uppercase;letter-spacing:0.8px;}
+        .earning-amount{font-size:1rem;font-weight:800;color:var(--text-primary);}
+        .how-to-list{list-style:none;}
+        .how-to-list li{font-size:0.8rem;color:var(--text-secondary);padding:0.3rem 0;display:flex;align-items:flex-start;gap:0.5rem;}
+        .how-to-list li::before{content:'→';color:var(--accent-green);flex-shrink:0;}
+
+        /* Hero Stats */
+        .hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.5rem;}
+        .hero-stat{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1rem;text-align:center;}
+        .hero-stat-val{font-size:1.5rem;font-weight:800;color:var(--accent-green);}
+        .hero-stat-label{font-size:0.75rem;color:var(--text-muted);margin-top:0.2rem;}
+
+        .section-hidden{display:none;}
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <a href="/dashboard" class="nav-back"><i class="fa fa-arrow-left"></i> Dashboard</a>
+    <div class="nav-title">📋 Schemes & Carbon Credits</div>
+</nav>
+
+<div class="hero">
+    <div class="hero-inner">
+        <h1>Government Schemes & Carbon Credits</h1>
+        <p>Explore central & state government welfare schemes for farmers, and discover how you can earn income through carbon credits.</p>
+        <div class="tab-nav">
+            <button class="tab-btn active" id="tabSchemes" onclick="showTab('schemes')">📋 Govt Schemes</button>
+            <button class="tab-btn" id="tabCarbon" onclick="showTab('carbon')">🌱 Carbon Credits</button>
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat"><div class="hero-stat-val">8+</div><div class="hero-stat-label">Active Schemes</div></div>
+            <div class="hero-stat"><div class="hero-stat-val">₹6,000</div><div class="hero-stat-label">PM-KISAN/year</div></div>
+            <div class="hero-stat"><div class="hero-stat-val">₹5,000+</div><div class="hero-stat-label">Carbon Credit/Acre</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="page-content">
+
+    <!-- Schemes Section -->
+    <div id="sectionSchemes">
+        <div class="category-filters" id="schemeCatFilters">
+            <button class="cat-chip active" onclick="filterSchemes('all',this)">All Schemes</button>
+        </div>
+        <div class="schemes-grid" id="schemesGrid">
+            <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted)"><i class="fa fa-spinner fa-spin fa-2x"></i><br><br>Loading schemes...</div>
+        </div>
+    </div>
+
+    <!-- Carbon Credits Section -->
+    <div id="sectionCarbon" class="section-hidden">
+        <div style="background:linear-gradient(135deg,rgba(34,197,94,0.1),rgba(16,163,65,0.05));border:1px solid rgba(34,197,94,0.2);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem;">
+            <h2 style="font-size:1.1rem;margin-bottom:0.5rem;">🌱 What are Carbon Credits?</h2>
+            <p style="color:var(--text-secondary);font-size:0.88rem;line-height:1.7;">A carbon credit = 1 tonne of CO₂ reduced or captured. As a farmer, you earn credits by adopting eco-friendly practices and can sell them in the carbon market for <strong style="color:var(--accent-green)">₹500 - ₹5,000 per credit</strong>. India's Carbon Market launched under BEE (Bureau of Energy Efficiency) in 2023.</p>
+        </div>
+        <div class="carbon-grid" id="carbonGrid">
+            <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted)"><i class="fa fa-spinner fa-spin fa-2x"></i></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const CATEGORY_COLORS = {
+        'Income Support': '#22c55e', 'Organic Farming': '#10b981', 'Crop Insurance': '#3b82f6',
+        'Climate Resilient Farming': '#8b5cf6', 'Pension': '#f59e0b', 'Crop Specific': '#e879f9',
+        'Credit': '#06b6d4', 'Irrigation': '#0ea5e9'
+    };
+    const CARBON_ICONS = { 'basics':'💰','organic':'🌿','irrigation':'💧','agroforestry':'🌳','biochar':'⬛','registration':'📝' };
+
+    let allSchemes = [];
+
+    async function loadSchemes() {
+        try {
+            const res = await fetch('/api/schemes');
+            const data = await res.json();
+            allSchemes = data.schemes || [];
+            renderSchemes(allSchemes);
+            renderCategoryFilters(allSchemes);
+        } catch(e) { console.error(e); }
+    }
+
+    async function loadCarbon() {
+        try {
+            const res = await fetch('/api/carbon-credits');
+            const data = await res.json();
+            renderCarbon(data.data || []);
+        } catch(e) { console.error(e); }
+    }
+
+    function renderSchemes(schemes) {
+        const grid = document.getElementById('schemesGrid');
+        if (!schemes.length) { grid.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:3rem">No schemes found.</p>'; return; }
+        grid.innerHTML = schemes.map(s => {
+            const color = CATEGORY_COLORS[s.category] || '#8b5cf6';
+            const docs = (s.documents || []).slice(0,3).map(d => `<span class="scheme-tag">${d}</span>`).join('');
+            return `<div class="scheme-card">
+                <div class="scheme-card-header">
+                    <div class="scheme-category-badge" style="background:${color}22;color:${color};">${s.category}</div>
+                    <div class="scheme-name">${s.name}</div>
+                    <div class="scheme-ministry"><i class="fa fa-building" style="font-size:0.7rem"></i> ${s.ministry}</div>
+                </div>
+                <div class="scheme-card-body">
+                    <p class="scheme-desc">${s.description}</p>
+                    <div class="scheme-benefit">
+                        <div class="benefit-label">💰 Direct Benefit</div>
+                        <div class="benefit-value">${s.benefit}</div>
+                    </div>
+                    <div class="scheme-tags">
+                        ${s.state !== 'All India' ? `<span class="scheme-tag" style="color:var(--accent-yellow)">📍 ${s.state}</span>` : '<span class="scheme-tag">🇮🇳 All India</span>'}
+                        ${docs}
+                    </div>
+                </div>
+                <div class="scheme-footer">
+                    <div class="active-badge"><div class="active-dot"></div> Active</div>
+                    <a href="${s.website || '#'}" target="_blank" class="apply-btn">Apply Now →</a>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function renderCategoryFilters(schemes) {
+        const cats = [...new Set(schemes.map(s => s.category))];
+        const container = document.getElementById('schemeCatFilters');
+        const chips = cats.map(c => `<button class="cat-chip" onclick="filterSchemes('${c}',this)">${c}</button>`).join('');
+        container.innerHTML = `<button class="cat-chip active" onclick="filterSchemes('all',this)">All Schemes</button>${chips}`;
+    }
+
+    function filterSchemes(category, el) {
+        document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        if (category === 'all') { renderSchemes(allSchemes); return; }
+        renderSchemes(allSchemes.filter(s => s.category === category));
+    }
+
+    function renderCarbon(items) {
+        const grid = document.getElementById('carbonGrid');
+        grid.innerHTML = items.map(item => {
+            const icon = CARBON_ICONS[item.category] || '🌱';
+            const steps = (item.steps || item.how_to || []).map(s => `<li>${s}</li>`).join('');
+            return `<div class="carbon-card">
+                <div class="carbon-icon">${icon}</div>
+                <div class="carbon-title">${item.title}</div>
+                <div class="carbon-desc">${item.description}</div>
+                ${item.potential_earning ? `
+                    <div class="earning-badge">
+                        <div class="earning-label">Potential Earning</div>
+                        <div class="earning-amount">${item.potential_earning}</div>
+                    </div>` : ''}
+                ${steps ? `<ul class="how-to-list">${steps}</ul>` : ''}
+                ${item.contact ? `<p style="font-size:0.78rem;color:var(--accent-blue);margin-top:0.75rem;"><i class="fa fa-link"></i> ${item.contact}</p>` : ''}
+            </div>`;
+        }).join('');
+    }
+
+    function showTab(tab) {
+        document.getElementById('sectionSchemes').style.display = tab === 'schemes' ? 'block' : 'none';
+        document.getElementById('sectionCarbon').style.display = tab === 'carbon' ? 'block' : 'none';
+        document.getElementById('tabSchemes').classList.toggle('active', tab === 'schemes');
+        document.getElementById('tabCarbon').classList.toggle('active', tab === 'carbon');
+        if (tab === 'carbon') loadCarbon();
+    }
+
+    loadSchemes();
+</script>
+</body>
+</html>

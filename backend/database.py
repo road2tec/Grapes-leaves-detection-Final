@@ -87,27 +87,37 @@ def get_predictions_collection():
     return db['predictions']
 
 
-def create_user(name, email, hashed_password):
+def create_user(name, email, hashed_password, role='farmer', phone='', location='', expertise='', experience=''):
     """
     Create a new user in the database.
-    
+
     Args:
         name (str): User's full name
         email (str): User's email address (must be unique)
         hashed_password (str): Bcrypt-hashed password
-    
+        role (str): User role - 'farmer' or 'consultant'
+        phone (str): User's phone number
+        location (str): User's location/district
+        expertise (str): Consultant's area of expertise
+        experience (str): Consultant's years of experience
+
     Returns:
         str: The inserted user's ObjectId as a string
     """
     users = get_users_collection()
-    
+
     user_doc = {
         'name': name,
         'email': email,
         'password': hashed_password,
+        'role': role,
+        'phone': phone,
+        'location': location,
+        'expertise': expertise,
+        'experience': experience,
         'created_at': datetime.utcnow()
     }
-    
+
     result = users.insert_one(user_doc)
     return str(result.inserted_id)
 

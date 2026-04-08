@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mandi Prices | GrapevineAI</title>
+    <meta name="description" content="Live market prices for grapes and other commodities from Maharashtra mandis.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0f1e;
+            --bg-secondary: #111827;
+            --bg-card: #1a2235;
+            --accent-green: #22c55e;
+            --accent-yellow: #fbbf24;
+            --accent-red: #ef4444;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2d3748;
+            --gradient-main: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-green: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:var(--bg-primary); color:var(--text-primary); min-height:100vh; }
+
+        /* ── Navbar ── */
+        .navbar { background:var(--bg-secondary); border-bottom:1px solid var(--border); padding:0.75rem 2rem; display:flex; align-items:center; gap:1rem; position:sticky; top:0; z-index:100; }
+        .nav-back { color:var(--text-secondary); text-decoration:none; display:flex; align-items:center; gap:0.4rem; font-size:0.85rem; transition:color 0.2s; }
+        .nav-back:hover { color:var(--accent-green); }
+        .nav-title { font-size:1.1rem; font-weight:700; background:var(--gradient-main); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+        .live-badge { margin-left:auto; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#ef4444; padding:0.25rem 0.75rem; border-radius:20px; font-size:0.75rem; font-weight:600; display:flex; align-items:center; gap:0.4rem; }
+        .live-dot { width:6px;height:6px;background:#ef4444;border-radius:50%;animation:blink 1s infinite; }
+        @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+        /* ── Hero ── */
+        .hero { background:linear-gradient(135deg,rgba(102,126,234,0.15),rgba(118,75,162,0.1)); border-bottom:1px solid var(--border); padding:2rem 2rem 1.5rem; }
+        .hero h1 { font-size:2rem; font-weight:800; margin-bottom:0.4rem; }
+        .hero p { color:var(--text-secondary); font-size:0.95rem; margin-bottom:1.5rem; }
+
+        /* ── Filters ── */
+        .filters { display:flex; gap:0.75rem; flex-wrap:wrap; }
+        .filter-group { display:flex; align-items:center; gap:0.5rem; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:10px; padding:0.4rem 0.75rem; }
+        .filter-group label { font-size:0.78rem; color:var(--text-muted); }
+        .filter-select {
+            background:none; border:none; color:var(--text-primary);
+            font-size:0.85rem; outline:none; cursor:pointer;
+            font-family:'Inter',sans-serif;
+        }
+        .filter-select option { background:var(--bg-secondary); }
+        .refresh-btn {
+            padding:0.5rem 1.2rem; background:var(--gradient-main); border:none;
+            border-radius:10px; color:white; font-size:0.85rem; font-weight:600;
+            cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:opacity 0.2s;
+        }
+        .refresh-btn:hover { opacity:0.85; }
+
+        .page-content { padding:1.5rem 2rem; max-width:1400px; margin:0 auto; }
+
+        /* ── Stats Row ── */
+        .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.5rem; }
+        .stat-card {
+            background:var(--bg-card); border:1px solid var(--border); border-radius:14px;
+            padding:1.2rem; position:relative; overflow:hidden;
+        }
+        .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--gradient-main); }
+        .stat-label { font-size:0.78rem; color:var(--text-muted); margin-bottom:0.4rem; }
+        .stat-value { font-size:1.6rem; font-weight:800; }
+        .stat-val-green { color:var(--accent-green); }
+        .stat-sub { font-size:0.75rem; color:var(--text-secondary); margin-top:0.2rem; }
+
+        /* ── Main Grid ── */
+        .main-grid { display:grid; grid-template-columns:1fr 360px; gap:1.5rem; }
+        @media(max-width:1100px){.main-grid{grid-template-columns:1fr;}}
+
+        /* ── Price Table ── */
+        .table-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+        .table-header { padding:1.2rem 1.5rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+        .table-header h2 { font-size:1rem; font-weight:700; }
+        .table-count { background:rgba(34,197,94,0.15); color:var(--accent-green); border-radius:20px; padding:0.2rem 0.7rem; font-size:0.78rem; font-weight:600; }
+        .price-table { width:100%; border-collapse:collapse; }
+        .price-table th { padding:0.75rem 1.2rem; text-align:left; font-size:0.72rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.8px; background:rgba(255,255,255,0.02); }
+        .price-table td { padding:0.85rem 1.2rem; font-size:0.85rem; border-bottom:1px solid rgba(255,255,255,0.04); }
+        .price-table tr:hover td { background:rgba(255,255,255,0.025); }
+        .price-table tr:last-child td { border-bottom:none; }
+        .commodity-badge { display:inline-flex; align-items:center; gap:0.4rem; }
+        .commodity-dot { width:8px; height:8px; border-radius:50%; }
+        .price-min { color:var(--accent-red); }
+        .price-modal { color:var(--text-primary); font-weight:700; }
+        .price-max { color:var(--accent-green); }
+        .trend-up { color:var(--accent-green); }
+        .trend-down { color:var(--accent-red); }
+
+        /* ── Chart Panel ── */
+        .chart-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+        .chart-header { padding:1.2rem 1.5rem; border-bottom:1px solid var(--border); }
+        .chart-header h2 { font-size:1rem; font-weight:700; margin-bottom:0.3rem; }
+        .chart-body { padding:1.2rem; }
+
+        /* ── Commodity Chips ── */
+        .commodity-chips { display:flex; gap:0.5rem; flex-wrap:wrap; padding:1rem 1.2rem; border-bottom:1px solid var(--border); }
+        .chip { padding:0.3rem 0.85rem; border-radius:20px; font-size:0.78rem; font-weight:600; cursor:pointer; border:1px solid var(--border); color:var(--text-secondary); transition:all 0.2s; }
+        .chip.active { background:rgba(139,92,246,0.2); border-color:var(--accent-purple); color:var(--accent-purple); }
+        .chip:hover:not(.active) { border-color:var(--text-muted); color:var(--text-primary); }
+
+        .loading-spinner { text-align:center; padding:3rem; color:var(--text-muted); }
+        .loading-spinner i { font-size:2rem; animation:spin 1s linear infinite; }
+        @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+
+        ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="/dashboard" class="nav-back"><i class="fa fa-arrow-left"></i> Dashboard</a>
+    <div class="nav-title">📈 Mandi Prices</div>
+    <div class="live-badge"><div class="live-dot"></div> LIVE</div>
+</nav>
+
+<div class="hero">
+    <div style="max-width:1400px;margin:0 auto;">
+        <h1>Mandi Market Prices</h1>
+        <p>Real-time commodity prices from Maharashtra agricultural markets · Powered by Data.gov.in API</p>
+        <div class="filters">
+            <div class="filter-group">
+                <label><i class="fa fa-wheat-awn"></i></label>
+                <select class="filter-select" id="commodityFilter" onchange="loadPrices()">
+                    <option value="Grapes">Grapes</option>
+                    <option value="Wheat">Wheat</option>
+                    <option value="Rice">Rice</option>
+                    <option value="Onion">Onion</option>
+                    <option value="Tomato">Tomato</option>
+                    <option value="Cotton">Cotton</option>
+                    <option value="Soybean">Soybean</option>
+                    <option value="Pomegranate">Pomegranate</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fa fa-map-marker"></i></label>
+                <select class="filter-select" id="stateFilter" onchange="loadPrices()">
+                    <option value="Maharashtra">Maharashtra</option>
+                </select>
+            </div>
+            <button class="refresh-btn" onclick="loadPrices()">
+                <i class="fa fa-rotate-right"></i> Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="page-content">
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow">
+        <div class="stat-card"><div class="stat-label">Average Modal Price</div><div class="stat-value stat-val-green" id="statAvg">---</div><div class="stat-sub">per Quintal</div></div>
+        <div class="stat-card"><div class="stat-label">Highest Price</div><div class="stat-value" style="color:var(--accent-yellow);" id="statHigh">---</div><div class="stat-sub">per Quintal</div></div>
+        <div class="stat-card"><div class="stat-label">Lowest Price</div><div class="stat-value" style="color:var(--accent-red);" id="statLow">---</div><div class="stat-sub">per Quintal</div></div>
+        <div class="stat-card"><div class="stat-label">Markets Tracked</div><div class="stat-value" style="color:var(--accent-blue);" id="statMarkets">---</div><div class="stat-sub">today</div></div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+
+        <!-- Table -->
+        <div class="table-card">
+            <div class="commodity-chips" id="commodityChips"></div>
+            <div class="table-header">
+                <h2 id="tableTitle">Grape Prices</h2>
+                <div class="table-count" id="tableCount">Loading...</div>
+            </div>
+            <div id="tableBody">
+                <div class="loading-spinner"><i class="fa fa-spinner"></i><br><br>Fetching prices...</div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="chart-panel">
+            <div class="chart-header">
+                <h2>Price Range Chart</h2>
+                <p style="color:var(--text-muted);font-size:0.8rem;">Min · Modal · Max price per market</p>
+            </div>
+            <div class="chart-body">
+                <canvas id="priceChart" height="350"></canvas>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let priceChart = null;
+    const COMMODITY_COLORS = {
+        'Grapes': '#8b5cf6', 'Wheat': '#fbbf24', 'Rice': '#22c55e',
+        'Onion': '#f97316', 'Tomato': '#ef4444', 'Cotton': '#3b82f6',
+        'Soybean': '#10b981', 'Pomegranate': '#e879f9'
+    };
+
+    async function loadPrices() {
+        const commodity = document.getElementById('commodityFilter').value;
+        const state = document.getElementById('stateFilter').value;
+
+        document.getElementById('tableBody').innerHTML = '<div class="loading-spinner"><i class="fa fa-spinner"></i><br><br>Fetching prices...</div>';
+        document.getElementById('tableTitle').textContent = `${commodity} Prices`;
+        document.getElementById('tableCount').textContent = 'Loading...';
+
+        try {
+            const res = await fetch(`/api/prices?commodity=${encodeURIComponent(commodity)}&state=${encodeURIComponent(state)}`);
+            const data = await res.json();
+
+            if (data.success && data.data.length > 0) {
+                renderTable(data.data);
+                renderChart(data.data);
+                renderStats(data.data);
+                document.getElementById('tableCount').textContent = `${data.total} markets`;
+            } else {
+                document.getElementById('tableBody').innerHTML = '<div class="loading-spinner"><i class="fa fa-circle-xmark"></i><br><br>No data found</div>';
+            }
+        } catch(e) {
+            document.getElementById('tableBody').innerHTML = '<div class="loading-spinner"><i class="fa fa-wifi"></i><br><br>Using cached data...</div>';
+        }
+    }
+
+    function renderTable(items) {
+        const html = `
+            <table class="price-table">
+                <thead><tr>
+                    <th>Commodity / Variety</th>
+                    <th>Market</th>
+                    <th>Min ₹</th>
+                    <th>Modal ₹</th>
+                    <th>Max ₹</th>
+                    <th>Date</th>
+                </tr></thead>
+                <tbody>
+                    ${items.map(item => {
+                        const color = COMMODITY_COLORS[item.commodity] || '#8b5cf6';
+                        return `<tr>
+                            <td>
+                                <div class="commodity-badge">
+                                    <div class="commodity-dot" style="background:${color}"></div>
+                                    <div>
+                                        <div style="font-weight:600">${item.commodity}</div>
+                                        <div style="font-size:0.75rem;color:var(--text-muted)">${item.variety || '-'}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div style="font-weight:500">${item.market}</div>
+                                <div style="font-size:0.75rem;color:var(--text-muted)">${item.state}</div>
+                            </td>
+                            <td class="price-min">₹${formatNum(item.price_min)}</td>
+                            <td class="price-modal">₹${formatNum(item.price_modal)}</td>
+                            <td class="price-max">₹${formatNum(item.price_max)}</td>
+                            <td style="color:var(--text-muted);font-size:0.8rem">${item.arrival_date || 'Today'}</td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>`;
+        document.getElementById('tableBody').innerHTML = html;
+    }
+
+    function renderChart(items) {
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        const labels = items.slice(0, 8).map(i => i.market);
+        const mins = items.slice(0, 8).map(i => i.price_min);
+        const modals = items.slice(0, 8).map(i => i.price_modal);
+        const maxs = items.slice(0, 8).map(i => i.price_max);
+
+        if (priceChart) priceChart.destroy();
+        priceChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Min', data: mins, backgroundColor: 'rgba(239,68,68,0.5)', borderColor: '#ef4444', borderWidth: 1 },
+                    { label: 'Modal', data: modals, backgroundColor: 'rgba(139,92,246,0.7)', borderColor: '#8b5cf6', borderWidth: 1 },
+                    { label: 'Max', data: maxs, backgroundColor: 'rgba(34,197,94,0.5)', borderColor: '#22c55e', borderWidth: 1 }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+                scales: {
+                    x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                    y: {
+                        ticks: { color: '#64748b', font: { size: 10 }, callback: v => '₹' + v },
+                        grid: { color: 'rgba(255,255,255,0.04)' }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderStats(items) {
+        const modals = items.map(i => i.price_modal).filter(Boolean);
+        if (modals.length === 0) return;
+        document.getElementById('statAvg').textContent = '₹' + formatNum(Math.round(modals.reduce((a,b)=>a+b,0)/modals.length));
+        document.getElementById('statHigh').textContent = '₹' + formatNum(Math.max(...items.map(i=>i.price_max)));
+        document.getElementById('statLow').textContent = '₹' + formatNum(Math.min(...items.map(i=>i.price_min)));
+        document.getElementById('statMarkets').textContent = items.length;
+    }
+
+    function renderChips() {
+        const commodities = ['Grapes','Wheat','Rice','Onion','Tomato','Cotton','Soybean','Pomegranate'];
+        const container = document.getElementById('commodityChips');
+        container.innerHTML = commodities.map(c => `
+            <div class="chip ${c === 'Grapes' ? 'active' : ''}" onclick="selectChip(this, '${c}')">${c}</div>
+        `).join('');
+    }
+
+    function selectChip(el, commodity) {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('commodityFilter').value = commodity;
+        loadPrices();
+    }
+
+    function formatNum(n) { return n ? Number(n).toLocaleString('en-IN') : '0'; }
+
+    renderChips();
+    loadPrices();
+</script>
+</body>
+</html>

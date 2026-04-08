@@ -11,15 +11,6 @@ grapevine leaf images into four categories:
   3. Healthy
   4. Leaf Blight
 
-Optimizations applied:
-  - Uses PIL/NumPy data loading (avoids TF 3.13 compatibility issues)
-  - 128x128 image size (4x fewer pixels than 224x224)
-  - Lightweight CNN architecture with fewer parameters
-  - Aggressive early stopping to avoid wasted epochs
-  - NumPy-based augmentation applied during loading
-  - CPU-optimized batch size and threading
-
-Author: Grapevine Disease Detection System
 """
 
 import os

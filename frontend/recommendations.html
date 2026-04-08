@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disease Recommendations | GrapevineAI</title>
+    <meta name="description" content="Smart treatment recommendations for detected grapevine diseases.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root{--bg-primary:#0a0f1e;--bg-secondary:#111827;--bg-card:#1a2235;--accent-green:#22c55e;--accent-red:#ef4444;--accent-yellow:#fbbf24;--accent-purple:#8b5cf6;--accent-blue:#3b82f6;--text-primary:#f1f5f9;--text-secondary:#94a3b8;--text-muted:#64748b;--border:#2d3748;--gradient-main:linear-gradient(135deg,#667eea 0%,#764ba2 100%);}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Inter',sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;}
+        .navbar{background:var(--bg-secondary);border-bottom:1px solid var(--border);padding:0.75rem 2rem;display:flex;align-items:center;gap:1rem;position:sticky;top:0;z-index:100;}
+        .nav-back{color:var(--text-secondary);text-decoration:none;display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;transition:color 0.2s;}
+        .nav-back:hover{color:var(--accent-green);}
+        .nav-title{font-size:1.1rem;font-weight:700;background:var(--gradient-main);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .page-content{max-width:1000px;margin:2rem auto;padding:0 2rem 3rem;}
+
+        /* Disease Selector */
+        .disease-selector{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem;}
+        .disease-selector h2{font-size:1rem;font-weight:700;margin-bottom:1rem;}
+        .disease-chips{display:flex;gap:0.6rem;flex-wrap:wrap;}
+        .d-chip{padding:0.5rem 1.1rem;border-radius:20px;border:1px solid var(--border);font-size:0.83rem;font-weight:600;cursor:pointer;transition:all 0.2s;background:none;color:var(--text-secondary);font-family:'Inter',sans-serif;}
+        .d-chip.active,.d-chip:hover{transform:scale(1.03);}
+        .d-chip.healthy.active{background:rgba(34,197,94,0.2);border-color:#22c55e;color:#22c55e;}
+        .d-chip.blackrot.active{background:rgba(139,92,246,0.2);border-color:#8b5cf6;color:#8b5cf6;}
+        .d-chip.esca.active{background:rgba(239,68,68,0.2);border-color:#ef4444;color:#ef4444;}
+        .d-chip.blight.active{background:rgba(251,191,36,0.2);border-color:#fbbf24;color:#fbbf24;}
+
+        /* Severity Banner */
+        .severity-banner{border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:flex-start;gap:1.25rem;}
+        .sev-high{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);}
+        .sev-veryhigh{background:rgba(220,38,38,0.12);border:1px solid rgba(220,38,38,0.4);}
+        .sev-medium{background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);}
+        .sev-none{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);}
+        .sev-icon{font-size:2.5rem;}
+        .sev-title{font-size:1.3rem;font-weight:800;margin-bottom:0.3rem;}
+        .sev-scientific{font-size:0.8rem;color:var(--text-muted);font-style:italic;margin-bottom:0.5rem;}
+        .sev-tag{display:inline-block;padding:0.2rem 0.7rem;border-radius:20px;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;}
+
+        /* Cards Grid */
+        .cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;}
+        @media(max-width:700px){.cards-grid{grid-template-columns:1fr;}}
+        .info-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+        .card-header{padding:0.85rem 1.2rem;border-bottom:1px solid var(--border);font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;display:flex;align-items:center;gap:0.5rem;}
+        .card-body{padding:1.2rem;}
+        .symptom-item{display:flex;align-items:flex-start;gap:0.6rem;padding:0.5rem 0;font-size:0.83rem;color:var(--text-secondary);border-bottom:1px solid rgba(255,255,255,0.04);}
+        .symptom-item:last-child{border-bottom:none;}
+        .symptom-dot{width:6px;height:6px;background:var(--accent-red);border-radius:50%;margin-top:0.4rem;flex-shrink:0;}
+
+        /* Treatments */
+        .treatment-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;margin-bottom:1rem;overflow:hidden;}
+        .treatment-header{padding:1rem 1.25rem;display:flex;align-items:center;gap:0.75rem;background:rgba(255,255,255,0.02);}
+        .treatment-type{padding:0.2rem 0.7rem;border-radius:20px;font-size:0.7rem;font-weight:700;}
+        .type-chemical{background:rgba(59,130,246,0.15);color:#3b82f6;}
+        .type-biological{background:rgba(34,197,94,0.15);color:#22c55e;}
+        .type-organic{background:rgba(16,185,129,0.15);color:#10b981;}
+        .type-consult{background:rgba(251,191,36,0.15);color:#fbbf24;}
+        .treatment-name{font-size:0.95rem;font-weight:700;}
+        .treatment-body{padding:0.75rem 1.25rem 1.25rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;}
+        @media(max-width:600px){.treatment-body{grid-template-columns:1fr;}}
+        .treatment-detail{background:rgba(255,255,255,0.03);border-radius:10px;padding:0.6rem 0.8rem;}
+        .detail-label{font-size:0.7rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:0.25rem;}
+        .detail-value{font-size:0.83rem;color:var(--text-secondary);}
+
+        /* Cost Analysis */
+        .cost-card{background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(16,163,65,0.04));border:1px solid rgba(34,197,94,0.2);border-radius:14px;padding:1.25rem;margin-bottom:1.25rem;}
+        .cost-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:0.75rem;}
+        @media(max-width:600px){.cost-grid{grid-template-columns:1fr;}}
+        .cost-item{text-align:center;}
+        .cost-val{font-size:1rem;font-weight:800;color:var(--accent-green);margin-bottom:0.2rem;}
+        .cost-label{font-size:0.73rem;color:var(--text-muted);}
+
+        /* Preventive */
+        .prevent-list{list-style:none;}
+        .prevent-item{display:flex;align-items:flex-start;gap:0.5rem;padding:0.4rem 0;font-size:0.83rem;color:var(--text-secondary);}
+        .prevent-item::before{content:'✓';color:var(--accent-green);font-weight:700;flex-shrink:0;}
+
+        /* Spray Timing Box */
+        .timing-box{background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:flex-start;gap:0.75rem;}
+        .timing-box i{color:var(--accent-yellow);font-size:1.1rem;margin-top:0.1rem;}
+
+        /* Chat Link */
+        .chat-cta{background:linear-gradient(135deg,rgba(139,92,246,0.15),rgba(102,126,234,0.08));border:1px solid rgba(139,92,246,0.3);border-radius:14px;padding:1.25rem 1.5rem;display:flex;align-items:center;gap:1rem;text-decoration:none;transition:all 0.2s;margin-top:1.5rem;}
+        .chat-cta:hover{transform:translateY(-2px);border-color:var(--accent-purple);}
+        .chat-cta div:last-child{font-size:1.3rem;margin-left:auto;color:var(--accent-purple);}
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <a href="/predict-page" class="nav-back"><i class="fa fa-arrow-left"></i> Back to Predict</a>
+    <div class="nav-title">💊 Disease Recommendations</div>
+</nav>
+
+<div class="page-content">
+
+    <!-- Disease Picker -->
+    <div class="disease-selector">
+        <h2>Select Disease to View Treatment</h2>
+        <div class="disease-chips">
+            <button class="d-chip healthy" onclick="loadRecommendation('Healthy',this)">🌿 Healthy</button>
+            <button class="d-chip blackrot" onclick="loadRecommendation('Black Rot',this)">🦠 Black Rot</button>
+            <button class="d-chip esca" onclick="loadRecommendation('Esca (Black Measles)',this)">🍇 Esca</button>
+            <button class="d-chip blight" onclick="loadRecommendation('Leaf Blight (Isariopsis Leaf Spot)',this)">🍂 Leaf Blight</button>
+        </div>
+    </div>
+
+    <!-- Recommendation Content -->
+    <div id="recommendationContent">
+        <div style="text-align:center;padding:4rem;color:var(--text-muted);"><i class="fa fa-spinner fa-spin fa-2x"></i><br><br>Loading recommendation...</div>
+    </div>
+
+    <!-- Chat CTA -->
+    <a href="/chatbot" class="chat-cta">
+        <div style="font-size:2rem;">🤖</div>
+        <div>
+            <div style="font-weight:700;margin-bottom:0.2rem;">Need more help? Chat with KrishiBot</div>
+            <div style="font-size:0.82rem;color:var(--text-secondary);">Ask KrishiBot for personalized guidance based on your specific situation, in Hindi or English.</div>
+        </div>
+        <div>→</div>
+    </a>
+
+</div>
+
+<script>
+    const SEV_CONFIG = {
+        'High': { cls:'sev-high', tagBg:'rgba(239,68,68,0.2)', tagColor:'#ef4444', icon:'⚠️' },
+        'Very High': { cls:'sev-veryhigh', tagBg:'rgba(220,38,38,0.25)', tagColor:'#dc2626', icon:'🚨' },
+        'Medium': { cls:'sev-medium', tagBg:'rgba(251,191,36,0.2)', tagColor:'#fbbf24', icon:'⚡' },
+        'None': { cls:'sev-none', tagBg:'rgba(34,197,94,0.2)', tagColor:'#22c55e', icon:'✅' },
+        'Unknown': { cls:'sev-medium', tagBg:'rgba(100,116,139,0.2)', tagColor:'#94a3b8', icon:'❓' }
+    };
+    const TYPE_CLASSES = { 'Chemical':'type-chemical','Biological':'type-biological','Organic':'type-organic','Preventive Chemical':'type-chemical','Wood Treatment':'type-biological','Consult Expert':'type-consult' };
+
+    async function loadRecommendation(disease, el) {
+        document.querySelectorAll('.d-chip').forEach(c => c.classList.remove('active'));
+        if (el) el.classList.add('active');
+        document.getElementById('recommendationContent').innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text-muted);"><i class="fa fa-spinner fa-spin fa-2x"></i></div>';
+
+        try {
+            const res = await fetch(`/api/recommend?disease=${encodeURIComponent(disease)}`);
+            const data = await res.json();
+            if (data.success) renderRecommendation(data.recommendation);
+            else document.getElementById('recommendationContent').innerHTML = '<p style="color:var(--accent-red);text-align:center;padding:3rem">Failed to load recommendation.</p>';
+        } catch(e) { console.error(e); }
+    }
+
+    function renderRecommendation(r) {
+        const sev = SEV_CONFIG[r.severity] || SEV_CONFIG['Unknown'];
+
+        // Symptoms
+        const symptoms = (r.symptoms || []).map(s => `<div class="symptom-item"><div class="symptom-dot"></div>${s}</div>`).join('') || '<p style="color:var(--text-muted);font-size:0.85rem;">No symptoms to display</p>';
+
+        // Treatments
+        const treatments = (r.treatments || []).map(t => `
+            <div class="treatment-card">
+                <div class="treatment-header">
+                    <span class="treatment-type ${TYPE_CLASSES[t.type] || 'type-consult'}">${t.type}</span>
+                    <span class="treatment-name">${t.name}</span>
+                </div>
+                <div class="treatment-body">
+                    <div class="treatment-detail"><div class="detail-label">Dosage</div><div class="detail-value">${t.dosage}</div></div>
+                    <div class="treatment-detail"><div class="detail-label">Frequency</div><div class="detail-value">${t.frequency}</div></div>
+                    <div class="treatment-detail"><div class="detail-label">Estimated Cost</div><div class="detail-value">${t.cost_estimate}</div></div>
+                </div>
+            </div>`).join('');
+
+        // Preventive
+        const preventive = (r.preventive_measures || []).map(p => `<li class="prevent-item">${p}</li>`).join('');
+
+        // Cost
+        const cost = r.cost_analysis || {};
+        const costHtml = cost.treatment_cost_per_acre ? `
+            <div class="cost-card">
+                <div style="font-weight:700;font-size:0.9rem;margin-bottom:0.25rem;">💰 Cost-Benefit Analysis</div>
+                <div style="font-size:0.8rem;color:var(--text-secondary);">${cost.roi || ''}</div>
+                <div class="cost-grid">
+                    <div class="cost-item"><div class="cost-val">${cost.treatment_cost_per_acre}</div><div class="cost-label">Treatment Cost (per acre)</div></div>
+                    <div class="cost-item"><div class="cost-val" style="color:var(--accent-red);">${cost.potential_loss_if_untreated || 'N/A'}</div><div class="cost-label">Loss if Untreated</div></div>
+                    <div class="cost-item"><div class="cost-val" style="color:var(--accent-yellow);">${r.estimated_yield_loss || 'N/A'}</div><div class="cost-label">Estimated Yield Loss</div></div>
+                </div>
+            </div>` : '';
+
+        document.getElementById('recommendationContent').innerHTML = `
+            <div class="severity-banner ${sev.cls}">
+                <div class="sev-icon">${sev.icon}</div>
+                <div>
+                    <div class="sev-title">${r.disease_name}</div>
+                    <div class="sev-scientific">${r.scientific_name || ''}</div>
+                    <span class="sev-tag" style="background:${sev.tagBg};color:${sev.tagColor};">Severity: ${r.severity}</span>
+                    ${r.recovery_time ? `<span class="sev-tag" style="background:rgba(59,130,246,0.15);color:#3b82f6;margin-left:0.4rem;">Recovery: ${r.recovery_time}</span>` : ''}
+                </div>
+            </div>
+
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:1.2rem;margin-bottom:1.25rem;">
+                <p style="font-size:0.9rem;color:var(--text-secondary);line-height:1.8;">${r.description}</p>
+            </div>
+
+            <div class="cards-grid">
+                <div class="info-card">
+                    <div class="card-header"><i class="fa fa-microscope" style="color:var(--accent-red);"></i> Symptoms</div>
+                    <div class="card-body">${symptoms}</div>
+                </div>
+                <div class="info-card">
+                    <div class="card-header"><i class="fa fa-shield-halved" style="color:var(--accent-green);"></i> Preventive Measures</div>
+                    <div class="card-body"><ul class="prevent-list">${preventive}</ul></div>
+                </div>
+            </div>
+
+            <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem;">💊 Treatment Options</h3>
+            ${treatments || '<p style="color:var(--text-muted);">No specific treatment needed.</p>'}
+
+            <div class="timing-box">
+                <i class="fa fa-sun"></i>
+                <div><strong>Best Time to Spray:</strong> ${r.best_time_to_spray}</div>
+            </div>
+
+            ${costHtml}
+
+            <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:1rem 1.25rem;">
+                <strong>🏛️ Government Assistance:</strong> <span style="color:var(--text-secondary);font-size:0.88rem;"> ${r.government_assistance}</span>
+            </div>`;
+    }
+
+    // Load from URL param or default
+    const params = new URLSearchParams(window.location.search);
+    const disease = params.get('disease') || 'Healthy';
+    const chip = [...document.querySelectorAll('.d-chip')].find(c => c.textContent.toLowerCase().includes(disease.toLowerCase().split(' ')[0]));
+    loadRecommendation(disease, chip);
+</script>
+</body>
+</html>

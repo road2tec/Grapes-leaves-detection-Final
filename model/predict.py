@@ -11,13 +11,7 @@ Functions:
   - preprocess_image(): Prepare an image for model input
   - predict_disease(): Run prediction and return disease + confidence
 
-The prediction pipeline:
-  1. Load image from file path
-  2. Resize to 224x224 (model's expected input size)
-  3. Normalize pixel values to [0, 1]
-  4. Expand dimensions to match batch format
-  5. Run through model to get class probabilities
-  6. Return disease name and confidence percentage
+
 """
 
 import os

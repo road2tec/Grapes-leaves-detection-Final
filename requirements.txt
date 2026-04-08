@@ -29,3 +29,14 @@ python-dotenv>=1.0.0
 werkzeug>=2.3.0
 matplotlib>=3.7.0
 seaborn>=0.12.0
+
+# ============ NEW MODULES ============
+
+# Google Gemini AI (Smart Advisor Chatbot)
+google-generativeai>=0.7.0
+
+# HTTP Requests (Mandi Prices API, Schemes)
+requests>=2.31.0
+
+# File upload handling for Equipment Marketplace
+Pillow>=10.0.0
