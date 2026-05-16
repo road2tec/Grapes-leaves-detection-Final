@@ -14,4 +14,6 @@ uploads/*
 .DS_Store
 
 # Generated documents
-PROJECT_OVERVIEW.md
+PROJECT_REPORT.md
+
+.venv311/
